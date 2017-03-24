@@ -1,0 +1,93 @@
+<?php if ( ! defined('BASEPATH')) exit('No direct script access allowed');
+
+class Welcome extends CI_Controller {
+	
+	public function index()
+	{
+		$ip = $this->getIP();
+		if (!$ip) {
+			$mac = 'undefined';
+		}
+		if (!($mac = $this->getMacAddress())) {
+			$mac = 'undefined';
+		}
+
+		$url = "/sign?called=&res=notyet&challenge=no&cip=$ip&mac=$mac";
+
+		//跳转到登录界面
+		redirect($url);
+
+		//跳转到登录的url
+		//echo '<script language="JavaScript">window.location.href="$url";</script>';
+		
+	}
+
+	public function signout()
+	{
+		if ($_COOKIE) {
+			$_COOKIE = [];
+		}
+		redirect('/sign', 'refresh');
+	}
+
+	/**
+	 * @return string ip
+	 */
+	public function getIP() {
+
+		if (getenv("HTTP_X_FORWARDED_FOR")) {
+
+			//这个提到最前面，作为优先级,nginx代理会获取到用户真实ip,发在这个环境变量上，必须要nginx配置这个环境变量HTTP_X_FORWARDED_FOR
+
+			$ip = getenv("HTTP_X_FORWARDED_FOR");
+
+		} else if (getenv("REMOTE_ADDR")) {
+
+			//在nginx作为反向代理的架构中，使用REMOTE_ADDR拿到的将会是反向代理的的ip，即拿到是nginx服务器的ip地址。往往表现是一个内网ip。
+
+			$ip = getenv("REMOTE_ADDR");
+
+		} else if ($_SERVER['REMOTE_ADDR']) {
+
+			$ip = $_SERVER['REMOTE_ADDR'];
+
+		} else if (getenv("HTTP_CLIENT_IP")) {
+
+			//HTTP_CLIENT_IP攻击者可以伪造一个这样的头部信息，导致获取的是攻击者随意设置的ip地址。
+
+			$ip = getenv("HTTP_CLIENT_IP");
+
+		} else {
+
+			$ip = "unknown";
+
+		}
+
+		return $ip;
+
+	}
+
+	/**
+	 * @return string mac address
+	 */
+	public function getMacAddress()
+	{
+		// Turn on output buffering
+//		ob_start();
+		//Get the ipconfig details using system commond
+		system('ipconfig /all');
+
+		// Capture the output into a variable
+		$mycom=ob_get_contents();
+		// Clean (erase) the output buffer
+		ob_clean();
+
+		$findme = "Physical";
+		//Search the "Physical" | Find the position of Physical text
+		$pmac = strpos($mycom, $findme);
+
+		// Get Physical Address
+		return $mac=substr($mycom,($pmac+36),17);
+	}
+}
+?>
