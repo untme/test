@@ -6,3 +6,6 @@
  * Time: 下午 2:50
  */
 echo "hello word";
+function cat(){
+    __halt_compiler();
+}
